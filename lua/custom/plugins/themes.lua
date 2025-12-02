@@ -4,8 +4,8 @@ return {
     opts = {
       bold = false,
     },
+    {
+      "gmr458/cold.nvim"
+    }
   },
-  {
-
-  }
 }
