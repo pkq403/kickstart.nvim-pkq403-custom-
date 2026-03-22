@@ -112,6 +112,10 @@ vim.opt.rtp:prepend(lazypath)
 
 -- Lazy plugins:
 require('lazy').setup({
+  rocks = {
+    enabled = false,
+    hererocks = false,
+  },
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
   {
     'lewis6991/gitsigns.nvim',
@@ -417,7 +421,7 @@ require('lazy').setup({
         dashboard.button('e', '  > New file', ':ene <BAR> startinsert <CR>'),
         dashboard.button('f', '  > Find file', ':cd $HOME/Workspace | Telescope find_files<CR>'),
         dashboard.button('r', '  > Recent', ':Telescope oldfiles<CR>'),
-        dashboard.button('s', '  > Settings', ':e $MYVIMRC | :cd %:p:h | split . | wincmd k | pwd<CR>'),
+        dashboard.button('s', '  > Settings', ':e $MYVIMRC | :cd %:p:h | 8split . | wincmd k | pwd<CR>'),
         dashboard.button('q', '  > Quit NVIM', ':qa<CR>'),
       }
       --dashboard.file_icons.provider = 'devicons'
@@ -981,20 +985,18 @@ require('lazy').setup({
   --
   --  Here are some example plugins that I've included in the Kickstart repository.
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
-  --
-  require 'kickstart.plugins.debug',
-  -- require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
-  require 'kickstart.plugins.autopairs',
-  -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
-
+  -- Basic Plugins (default in kickstart nvim)
+  require 'kickstart.plugins.indent_line',
+  require 'kickstart.plugins.lint',
+  require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+  -- Themes
   require 'custom.plugins.themes',
-  -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
-  --    This is the easiest way to modularize your config.
-  --
-  --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- { import = 'custom.plugins' },
-  --
+  -- AI plugins
+  require 'custom.plugins.copilot',
+  require 'custom.plugins.opencode',
+  -- QoL Plugins
+  require 'kickstart.plugins.autopairs',
+  require 'kickstart.plugins.debug',
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
   -- Or use telescope!
   -- In normal mode type `<space>sh` then write `lazy.nvim-plugin`
