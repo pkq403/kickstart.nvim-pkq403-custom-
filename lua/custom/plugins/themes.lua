@@ -1,11 +1,12 @@
 return {
   {
-    "blazkowolf/gruber-darker.nvim",
+    'blazkowolf/gruber-darker.nvim',
     opts = {
       bold = false,
     },
     {
-      "gmr458/cold.nvim"
-    }
+      'gmr458/cold.nvim',
+    },
   },
+  { 'EdenEast/nightfox.nvim' },
 }
