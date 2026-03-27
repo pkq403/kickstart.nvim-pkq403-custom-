@@ -985,6 +985,8 @@ require('lazy').setup({
   require 'kickstart.plugins.indent_line',
   require 'kickstart.plugins.lint',
   require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+  -- text-objects
+  require 'custom.plugins.treesitter-text-objects',
   -- Themes
   require 'custom.plugins.themes',
   -- AI plugins
