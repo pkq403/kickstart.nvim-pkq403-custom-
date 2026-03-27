@@ -48,8 +48,8 @@ return {
         enabled = true, -- requires copilot-lsp as a dependency
         auto_trigger = false,
         keymap = {
-          accept_and_goto = '<leader>p',
-          accept = false,
+          accept_and_goto = '<M-1>',
+          accept = '<M-2>',
           dismiss = false,
         },
       },
