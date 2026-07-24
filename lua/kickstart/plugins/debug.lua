@@ -69,22 +69,17 @@ return {
       end,
       desc = 'Debug: See last session result.',
     },
+    {
+      '<leader>dh',
+      function()
+        require('dapui').eval()
+      end,
+      desc = 'Debug: Hover/Eval variable',
+    },
   },
   config = function()
     local dap = require 'dap'
     local dapui = require 'dapui'
-    -- Python Configuration
-    dap.configurations.python = {
-      {
-        type = 'debugpy',
-        request = 'launch',
-        name = 'Launch file with args',
-        program = '${file}',
-        pythonPath = function()
-          return 'python3'
-        end,
-      },
-    }
     require('mason-nvim-dap').setup {
       -- Makes a best effort to setup the various debuggers with
       -- reasonable debug configurations
@@ -99,6 +94,8 @@ return {
       ensure_installed = {
         -- Update this to ensure that you have the debuggers for the langs you want
         'delve',
+        'python',
+        'js-debug-adapter',
       },
     }
 
@@ -148,5 +145,117 @@ return {
         detached = vim.fn.has 'win32' == 0,
       },
     }
+
+  -- Python debugging via nvim-dap-python --------------------------------
+  local mason_debugpy = vim.fn.stdpath('data') .. '/mason/packages/debugpy'
+  local debugpy_python = mason_debugpy .. (vim.fn.has('win32') == 1 and '/venv/Scripts/python.exe' or '/venv/bin/python')
+  if vim.fn.executable(debugpy_python) ~= 1 then
+    debugpy_python = 'python3'
+  end
+  require('dap-python').setup(debugpy_python, {
+    include_configs = true,
+    console = 'integratedTerminal',
+  })
+  require('dap-python').test_runner = 'pytest'
+
+  table.insert(dap.configurations.python, {
+    type = 'python',
+    request = 'launch',
+    name = 'pytest: current file',
+    module = 'pytest',
+    args = { '${file}' },
+    console = 'integratedTerminal',
+  })
+  table.insert(dap.configurations.python, {
+    type = 'python',
+    request = 'launch',
+    name = 'pytest: prompt args',
+    module = 'pytest',
+    args = function()
+      local s = vim.fn.input('pytest args: ')
+      if s == '' then
+        return nil
+      end
+      local utils = require('dap.utils')
+      if utils.splitstr and vim.fn.has('nvim-0.10') == 1 then
+        return utils.splitstr(s)
+      end
+      return vim.split(s, ' +')
+    end,
+    console = 'integratedTerminal',
+  })
+
+  -- JavaScript / TypeScript / Vue / React debugging ---------------------
+  if vim.fn.executable('node') == 1 then
+    local js_dap_server = vim.fn.stdpath('data') .. '/mason/packages/js-debug-adapter/js-debug/src/dapDebugServer.js'
+    if vim.uv.fs_stat(js_dap_server) then
+      dap.adapters['pwa-node'] = {
+        type = 'server',
+        host = 'localhost',
+        port = '${port}',
+        executable = { command = 'node', args = { js_dap_server, '${port}' } },
+      }
+      dap.adapters['pwa-chrome'] = dap.adapters['pwa-node']
+
+      local js_configs = {
+        {
+          type = 'pwa-node',
+          request = 'launch',
+          name = 'Node: launch file',
+          program = '${file}',
+          cwd = '${workspaceFolder}',
+        },
+        {
+          type = 'pwa-node',
+          request = 'launch',
+          name = 'Node: launch file (args)',
+          program = '${file}',
+          cwd = '${workspaceFolder}',
+          args = function()
+            local s = vim.fn.input('Arguments: ')
+            local utils = require('dap.utils')
+            if utils.splitstr and vim.fn.has('nvim-0.10') == 1 then
+              return utils.splitstr(s)
+            end
+            return vim.split(s, ' +')
+          end,
+        },
+        {
+          type = 'pwa-node',
+          request = 'attach',
+          name = 'Node: attach (localhost:9229)',
+          address = 'localhost',
+          port = 9229,
+          cwd = '${workspaceFolder}',
+          restart = true,
+          sourceMaps = true,
+        },
+        {
+          type = 'pwa-chrome',
+          request = 'launch',
+          name = 'Chrome: launch (Vite/React/Vue dev)',
+          url = function()
+            return vim.fn.input('Dev server URL: ', 'http://localhost:5173')
+          end,
+          webRoot = '${workspaceFolder}',
+          sourceMaps = true,
+          userDataDir = false,
+        },
+        {
+          type = 'pwa-chrome',
+          request = 'attach',
+          name = 'Chrome: attach (localhost:9222)',
+          address = 'localhost',
+          port = 9222,
+          webRoot = '${workspaceFolder}',
+          sourceMaps = true,
+        },
+      }
+      for _, ft in ipairs({ 'javascript', 'typescript', 'javascriptreact', 'typescriptreact', 'vue' }) do
+        dap.configurations[ft] = dap.configurations[ft] or {}
+        vim.list_extend(dap.configurations[ft], js_configs)
+      end
+    end
+  end
   end,
 }

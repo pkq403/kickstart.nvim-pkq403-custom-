@@ -1,10 +1,10 @@
 return vim.api.nvim_create_autocmd('BufWritePost', {
   group = vim.api.nvim_create_augroup('organise_imports', { clear = true }),
-  pattern = '*.ts',
+  pattern = { '*.ts', '*.tsx', '*.js', '*.jsx', '*.mts', '*.mjs', '*.vue' },
   callback = function(args)
     local clients = vim.lsp.get_clients { bufnr = args.buf }
     for _, client in ipairs(clients) do
-      if client.name == 'ts_ls' or client.name == 'typescript-tools' then
+      if client.name == 'ts_ls' or client.name == 'typescript-tools' or client.name == 'vtsls' then
         local enc = client.offset_encoding
         local function run_action(only)
           local params = {

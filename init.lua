@@ -176,8 +176,9 @@ require('lazy').setup({
         { '<leader>r', group = '[R]ename' },
         { '<leader>s', group = '[S]earch' },
         { '<leader>w', group = '[W]orkspace' },
-        { '<leader>t', group = '[T]oggle' },
-        { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
+{ '<leader>t', group = '[T]oggle' },
+          { '<leader>T', group = '[T]est' },
+          { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
       },
     },
   },
@@ -428,7 +429,7 @@ require('lazy').setup({
   { -- Fuzzy Finder (files, lsp, etc)
     'nvim-telescope/telescope.nvim',
     event = 'VimEnter',
-    branch = '0.1.x',
+    branch = 'master',
     dependencies = {
       'nvim-lua/plenary.nvim',
       { -- If encountering errors, see telescope-fzf-native README for installation instructions
@@ -670,7 +671,21 @@ require('lazy').setup({
             },
           },
         },
-        pyright = {},
+        pyright = {
+          settings = {
+            pyright = { disableOrganizeImports = true },
+            python = {},
+          },
+          before_init = function(_, config)
+            local py = require('custom.python').python(config.root_dir)
+            if py then
+              config.settings = config.settings or {}
+              config.settings.python = config.settings.python or {}
+              config.settings.python.pythonPath = py
+            end
+          end,
+        },
+        ruff = {},
         lua_ls = {
           settings = {
             Lua = {
@@ -683,12 +698,46 @@ require('lazy').setup({
         jsonls = {},
         cssls = {},
         html = {},
-        ts_ls = {},
+        vtsls = {
+          filetypes = {
+            'javascript', 'javascriptreact', 'typescript', 'typescriptreact', 'vue',
+          },
+          settings = {
+            vtsls = {
+              tsserver = {
+                globalPlugins = {
+                  {
+                    name = '@vue/typescript-plugin',
+                    location = vim.fn.stdpath('data') .. '/mason/packages/vue-language-server/node_modules/@vue/language-server',
+                    languages = { 'vue' },
+                    configNamespace = 'typescript',
+                  },
+                },
+              },
+            },
+          },
+        },
+        eslint = {
+          on_attach = function(client, bufnr)
+            local base = vim.lsp.config.eslint and vim.lsp.config.eslint.on_attach
+            if base then base(client, bufnr) end
+            vim.api.nvim_create_autocmd('BufWritePre', {
+              buffer = bufnr,
+              callback = function() vim.cmd 'LspEslintFixAll' end,
+            })
+          end,
+        },
+        tailwindcss = {},
         astro = {},
       }
 
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
+        'debugpy',
+        'mypy',
+        'prettierd',
+        'prettier',
+        'vue-language-server',
         'stylua', -- Used to format Lua code
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
@@ -702,6 +751,8 @@ require('lazy').setup({
           end,
         },
       }
+
+      vim.lsp.enable 'vue_ls'
     end,
   },
 
@@ -750,12 +801,22 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
-        python = { 'isort', 'black' },
+        python = { 'ruff_organize_imports', 'ruff_format' },
         json = { 'prettier' },
+        jsonc = { 'prettier' },
 
         go = { 'gofmt', 'goimports' },
         -- You can use 'stop_after_first' to run the first available formatter from the list
         javascript = { 'prettierd', 'prettier', stop_after_first = true },
+        javascriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+        typescript = { 'prettierd', 'prettier', stop_after_first = true },
+        typescriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+        vue = { 'prettierd', 'prettier', stop_after_first = true },
+        css = { 'prettierd', 'prettier', stop_after_first = true },
+        scss = { 'prettierd', 'prettier', stop_after_first = true },
+        yaml = { 'prettierd', 'prettier', stop_after_first = true },
+        html = { 'prettierd', 'prettier', stop_after_first = true },
+        markdown = { 'prettierd', 'prettier', stop_after_first = true },
       },
     },
   },
@@ -904,7 +965,10 @@ require('lazy').setup({
     build = ':TSUpdate',
     main = 'nvim-treesitter.config', -- Sets main module to use for opts
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+      ensure_installed = {
+        'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'python', 'query', 'vim', 'vimdoc',
+        'javascript', 'typescript', 'tsx', 'vue', 'css', 'scss', 'jsdoc', 'jsonc', 'graphql', 'yaml', 'regex',
+      },
       auto_install = true,
       highlight = {
         enable = true,
@@ -933,6 +997,7 @@ require('lazy').setup({
   require 'custom.plugins.copilot',
   require 'custom.plugins.opencode',
   require 'custom.plugins.barbar',
+  require 'custom.plugins.python',
 }, {
 
   ui = {
@@ -957,6 +1022,7 @@ require('lazy').setup({
 })
 -- Autocmds
 require 'autocmds.autoimports-ts'
+require 'autocmds.pre-commit'
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
 vim.cmd 'colorscheme nightfox'

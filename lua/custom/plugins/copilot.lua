@@ -14,7 +14,7 @@ return {
     vim.notify('copilot setup running', vim.log.levels.INFO, { title = 'copilot.lua' })
     require('copilot').setup {
       panel = {
-        enabled = true,
+        enabled = false,
         auto_refresh = false,
         keymap = {
           jump_prev = '[[',
@@ -29,7 +29,7 @@ return {
         },
       },
       suggestion = {
-        enabled = true,
+        enabled = false,
         auto_trigger = true,
         hide_during_completion = false,
         debounce = 15,
@@ -45,7 +45,7 @@ return {
         },
       },
       nes = {
-        enabled = true, -- requires copilot-lsp as a dependency
+        enabled = false, -- requires copilot-lsp as a dependency
         auto_trigger = false,
         keymap = {
           --accept_and_goto = '<C-S-L>',
